@@ -2,7 +2,7 @@
 
 > A native ComfyUI node for **[llama-swap](https://github.com/mostlygeek/llama-swap)** — hot-swap any llama.cpp model without leaving your workflow.
 
-![screenshot](ex.jpg)
+![screenshot](ex.png)
 
 ---
 
