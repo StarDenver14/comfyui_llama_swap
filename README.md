@@ -1,39 +1,101 @@
-# ComfyUI Llama-Swap Client
+# 🦙 ComfyUI Llama-Swap Client
 
-A ComfyUI custom node for [llama-swap](https://github.com/mostlygeek/llama-swap) — the hot-swap model manager for llama.cpp.
+> A native ComfyUI node for **[llama-swap](https://github.com/mostlygeek/llama-swap)** — hot-swap any llama.cpp model without leaving your workflow.
 
-## Nodes
+![screenshot](ex.jpg)
 
-| Node | Purpose |
+---
+
+## ✨ Features
+
+| | |
 |---|---|
-| 🦙 **Llama-Swap Client** | Full inference: text + vision, system prompt, unload toggle |
-| 🦙 **Llama-Swap Model Selector** | Standalone model picker to feed `model_name` into other nodes |
+| 🔄 **Live model picker** | Fetches `/v1/models` from your running server and shows a floating dropdown — click to set |
+| 🖼️ **Vision support** | Connect any ComfyUI `IMAGE` node; the first frame is base64-encoded and sent as `image_url` |
+| 🧠 **Thinking extraction** | `<think>` / `<thinking>` blocks are **stripped** from `response` and surfaced in a separate `thinking` output |
+| ⏏️ **Auto-unload toggle** | Calls `/unload` automatically after every generation — great for VRAM-constrained setups |
+| 📋 **Running button** | Shows which model is currently warm in GPU memory via a toast notification |
+| 🔴 **Unload All button** | Manually frees VRAM from inside ComfyUI without touching the terminal |
 
-## Features
+---
 
-- **Fetch Models** button — live-pulls `/v1/models` from your running llama-swap server and refreshes the dropdown in-place
-- **Running** button — queries `/running` and shows which model is currently in GPU memory
-- **Unload All** button — manually calls `/unload` to free VRAM without leaving ComfyUI
-- **Unload after Generate** toggle — auto-calls `/unload` after every generation (great for VRAM-constrained workflows)
-- **Vision support** — attach any ComfyUI IMAGE node; the first frame is JPEG-encoded and sent as an `image_url` message
-- **Thinking extraction** — `<think>` / `<thinking>` blocks are stripped from `response` and surfaced in the separate `thinking` output; connect it to a Note node or another text output to debug reasoning chains
+## 🗂️ Nodes
 
-## Outputs
+### 🦙 Llama-Swap Client
+The main inference node.
 
-| Output | Content |
+| Input | Type | Description |
+|---|---|---|
+| `server_url` | STRING | llama-swap base URL (default `http://localhost:8080`) |
+| `model` | STRING | Model name — populated via **🔄 Fetch Models** |
+| `system_prompt` | STRING (multiline) | System role message |
+| `prompt` | STRING (multiline) | User message / question |
+| `unload_after_generate` | BOOLEAN | Auto-call `/unload` after every run |
+| `image` *(optional)* | IMAGE | Vision input — first frame sent as JPEG base64 |
+
+| Output | Description |
 |---|---|
-| `response` | Clean human-readable text, **no** `<think>` blocks |
-| `thinking` | Extracted reasoning (empty string if the model produced none) |
+| `response` | Clean human-readable text — **`<think>` blocks removed** |
+| `thinking` | Extracted reasoning chain (empty string if the model produced none) |
 
-## Setup
+---
 
-1. Clone / copy this folder to `ComfyUI/custom_nodes/comfyui_llama_swap/`
-2. Restart ComfyUI
-3. Add a **🦙 Llama-Swap Client** node, set `server_url` to your llama-swap address, hit **🔄 Fetch Models**
+### 🦙 Llama-Swap Model Selector
+A standalone picker that outputs `model_name` as a STRING.  
+Useful to share the same model choice across multiple inference nodes.
 
-## Requirements
+---
+
+## ⚡ Installation
+
+```bash
+cd ComfyUI/custom_nodes
+git clone https://github.com/yourname/comfyui_llama_swap
+```
+
+> **Dependencies:** `requests` and `pillow` — both already present in any standard ComfyUI environment.
+
+Restart ComfyUI after cloning.
+
+---
+
+## 🚀 Quick Start
+
+1. Add a **🦙 Llama-Swap Client** node
+2. Set `server_url` to your llama-swap address
+3. Click **🔄 Fetch Models** → select a model from the dropdown
+4. Connect a **Preview Text** node to `response`
+5. *(Optional)* Connect a second **Preview Text** node to `thinking` to debug reasoning chains
+6. Hit **Run** 🎉
+
+---
+
+## 🧠 Thinking Output
+
+Models like **DeepSeek-R1**, **QwQ**, **Qwen3** and other reasoning models wrap their chain-of-thought in `<think>` tags.  
+This node automatically separates them:
 
 ```
-pip install requests pillow
+response  →  clean answer, ready to use downstream
+thinking  →  full reasoning trace for inspection / debugging
 ```
-(Both are usually already present in a standard ComfyUI environment.)
+
+Both `<think>` and `<thinking>` variants are handled.
+
+---
+
+## 🔌 Backend Routes
+
+Three lightweight proxy routes are registered on ComfyUI's `PromptServer` at startup to avoid CORS issues:
+
+| Route | Proxies to |
+|---|---|
+| `GET /llama_swap/models` | `GET {url}/v1/models` |
+| `GET /llama_swap/running` | `GET {url}/running` |
+| `GET /llama_swap/unload` | `GET {url}/unload` |
+
+---
+
+## 📄 License
+
+MIT
