@@ -2,6 +2,7 @@ import re
 import base64
 import requests
 import numpy as np
+import random
 from io import BytesIO
 from PIL import Image
 
@@ -163,7 +164,17 @@ class LlamaSwapClientDev:
 
     @classmethod
     def INPUT_TYPES(cls):
-        return LlamaSwapClient.INPUT_TYPES()
+        inputs = LlamaSwapClient.INPUT_TYPES()
+        inputs["optional"]["randomize_seed"] = (
+            "BOOLEAN",
+            {
+                "default": False,
+                "label_on": "Random seed",
+                "label_off": "Fixed seed",
+                "tooltip": "If enabled, a random seed will be generated ignoring the provided seed value.",
+            },
+        )
+        return inputs
 
     def generate(
         self,
@@ -182,6 +193,7 @@ class LlamaSwapClientDev:
         logit_bias="",
         frequency_penalty=0.0,
         presence_penalty=0.0,
+        randomize_seed=False,
     ):
         base_url = server_url.rstrip("/")
         messages = []
@@ -212,7 +224,7 @@ class LlamaSwapClientDev:
             "top_k": top_k,
             "max_tokens": max_tokens,
             "stop": [s.strip() for s in stop.split("\n") if s.strip()],
-            "seed": seed,
+            "seed": seed if not randomize_seed else random.randint(0, 2**32 - 1),
             "logit_bias": logit_bias,
             "frequency_penalty": frequency_penalty,
             "presence_penalty": presence_penalty,
